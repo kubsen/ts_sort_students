@@ -1,4 +1,4 @@
-
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 export interface Student {
   name: string,
   surname: string,
@@ -23,62 +23,36 @@ function calculateGradeAverage(grades: number[]): number {
 
 export function sortStudents(students: Student[], sortBy: SortType,
   order: SortOrder): Student[] {
+  const sortOrder = order === 'asc' ? 1 : -1;
+
+  const sortFunctions = {
+    [SortType.Name]:
+     (a: Student, b: Student) => a.name.localeCompare(b.name) * sortOrder,
+    [SortType.Surname]:
+    (a: Student, b: Student) => a.surname.localeCompare(b.surname) * sortOrder,
+    [SortType.Age]:
+     (a: Student, b: Student) => (a.age - b.age) * sortOrder,
+    [SortType.Married]:
+      (a: Student, b: Student) => ((a.married ? 1 : 0) - (b.married ? 1 : 0))
+      * sortOrder,
+    [SortType.AverageGrade]: (a: Student, b: Student) => {
+      const avgA = calculateGradeAverage(a.grades);
+      const avgB = calculateGradeAverage(b.grades);
+
+      return (avgA - avgB) * sortOrder;
+    },
+  };
+
   const sortedStudents = [...students];
 
-  sortedStudents.sort((a, b) => {
-    let valueA;
-    let valueB;
+  sortedStudents.sort((a: Student, b: Student) => {
+    const sortFunction = sortFunctions[sortBy];
 
-    switch (sortBy) {
-      case SortType.Name:
-        valueA = a.name.toLowerCase();
-        valueB = b.name.toLowerCase();
-        break;
-      case SortType.Surname:
-        valueA = a.surname.toLowerCase();
-        valueB = b.surname.toLowerCase();
-        break;
-      case SortType.Age:
-        valueA = a.age;
-        valueB = b.age;
-        break;
-      case SortType.Married:
-        valueA = a.married ? 1 : 0;
-        valueB = b.married ? 1 : 0;
-        break;
-      case SortType.AverageGrade:
-        valueA = calculateGradeAverage(a.grades);
-        valueB = calculateGradeAverage(b.grades);
-        break;
-      default:
-        throw new Error('Invalid sort type!');
+    if (!sortFunction) {
+      throw new Error('Invalid sort type!');
     }
 
-    if (order === 'asc') {
-      if (valueA < valueB) {
-        return -1;
-      }
-
-      if (valueA > valueB) {
-        return 1;
-      }
-
-      return 0;
-    }
-
-    if (order === 'desc') {
-      if (valueA > valueB) {
-        return -1;
-      }
-
-      if (valueA < valueB) {
-        return 1;
-      }
-
-      return 0;
-    }
-
-    return 0;
+    return sortFunction(a, b);
   });
 
   return sortedStudents;
